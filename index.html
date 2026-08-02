@@ -1,0 +1,720 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Calculadora de Reserva Militar</title>
+<meta name="description" content="Simule o tempo restante para a reserva remunerada de Policiais e Bombeiros Militares, conforme a Lei 13.954/2019 e sua regra de transição.">
+<meta name="theme-color" content="#1a73e8">
+
+<style>
+:root{
+  --md-primary:        #1a56db;
+  --md-primary-dark:   #123e9e;
+  --md-primary-container: #e3ecff;
+  --md-on-primary-container: #0d2f8a;
+  --md-surface:        #ffffff;
+  --md-surface-alt:    #f3f5f9;
+  --md-background:     #eef1f6;
+  --md-on-surface:      #1b1f27;
+  --md-on-surface-soft: #4d5566;
+  --md-on-surface-faint:#8792a3;
+  --md-outline:        #dde2ea;
+  --md-outline-soft:   #e9ecf2;
+  --md-success:        #12805c;
+  --md-success-bg:     #e3f6ef;
+  --md-warning:        #b4530a;
+  --md-warning-bg:     #fdf0e3;
+  --radius-sm: 12px;
+  --radius-md: 16px;
+  --radius-lg: 22px;
+  --radius-pill: 999px;
+  --shadow-1: 0 1px 2px rgba(20,30,60,.06), 0 1px 6px rgba(20,30,60,.06);
+  --shadow-2: 0 4px 14px rgba(20,30,60,.10);
+  --ease: cubic-bezier(.2,.8,.2,1);
+  --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+*{ box-sizing: border-box; }
+html,body{ margin:0; padding:0; }
+body{
+  font-family: var(--font);
+  background: var(--md-background);
+  color: var(--md-on-surface);
+  -webkit-font-smoothing: antialiased;
+  line-height: 1.45;
+  padding-bottom: 40px;
+  background-image: radial-gradient(1200px 420px at 50% -180px, #dbe6ff 0%, transparent 60%);
+  background-repeat: no-repeat;
+}
+.app{ max-width: 640px; margin: 0 auto; padding: 20px 16px 8px; }
+.header{ text-align: center; padding: 18px 8px 24px; }
+.header .badge{
+  display:inline-flex; align-items:center; gap:6px;
+  background: var(--md-primary-container); color: var(--md-on-primary-container);
+  font-size: 12px; font-weight: 600; letter-spacing: .02em;
+  padding: 6px 12px; border-radius: var(--radius-pill); margin-bottom: 12px;
+}
+.header h1{ font-size: 26px; font-weight: 700; margin: 0 0 6px; letter-spacing: -0.01em; }
+.header p{ margin: 0; color: var(--md-on-surface-soft); font-size: 14.5px; }
+.card{
+  background: var(--md-surface); border: 1px solid var(--md-outline-soft);
+  border-radius: var(--radius-lg); box-shadow: var(--shadow-1);
+  padding: 18px; margin-bottom: 14px; animation: rise .35s var(--ease) both;
+}
+@keyframes rise{ from{ opacity:0; transform: translateY(8px);} to{ opacity:1; transform: translateY(0);} }
+.card h2{
+  font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em;
+  color: var(--md-on-surface-soft); margin: 0 0 12px;
+}
+.input-card label{ display:block; font-size: 13.5px; font-weight: 600; color: var(--md-on-surface-soft); margin-bottom: 8px; }
+.input-card .field{ margin-bottom: 14px; }
+.input-card .field:last-of-type{ margin-bottom: 0; }
+.date-row{ display:flex; gap:10px; }
+input[type="date"]{
+  flex:1; width:100%; font-family: inherit; font-size: 16px; padding: 13px 14px;
+  border-radius: var(--radius-md); border: 1.5px solid var(--md-outline);
+  background: var(--md-surface-alt); color: var(--md-on-surface); outline: none;
+  transition: border-color .18s var(--ease), background .18s var(--ease);
+  min-width: 0; appearance: none; -webkit-appearance: none;
+}
+input[type="date"]:focus{ border-color: var(--md-primary); background-color: var(--md-surface); }
+.btn{
+  appearance:none; border:none; cursor:pointer; font-family: inherit; font-size: 14.5px; font-weight: 600;
+  border-radius: var(--radius-pill); padding: 13px 22px; display:inline-flex; align-items:center; justify-content:center;
+  gap: 8px; transition: transform .12s var(--ease), box-shadow .18s var(--ease), background .18s var(--ease), opacity .15s;
+  white-space: nowrap;
+}
+.btn:active{ transform: scale(.97); }
+.btn-primary{ background: var(--md-primary); color: #fff; box-shadow: var(--shadow-2); width: 100%; margin-top: 4px; }
+.btn-primary:hover{ background: var(--md-primary-dark); }
+.btn-secondary{ background: var(--md-surface-alt); color: var(--md-on-surface); border: 1.5px solid var(--md-outline); }
+.btn-secondary:hover{ background: var(--md-outline-soft); }
+.results{ margin-top: 18px; }
+.grid-2{ display:grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px; }
+.stat-card{
+  background: var(--md-surface); border: 1px solid var(--md-outline-soft); border-radius: var(--radius-md);
+  box-shadow: var(--shadow-1); padding: 14px 16px; animation: rise .35s var(--ease) both;
+}
+.stat-card .stat-label{
+  font-size: 12px; font-weight: 600; color: var(--md-on-surface-faint);
+  text-transform: uppercase; letter-spacing: .03em; margin-bottom: 6px;
+}
+.stat-card .stat-value{ font-size: 17px; font-weight: 700; color: var(--md-on-surface); line-height:1.3; }
+.stat-card .stat-sub{ font-size: 12.5px; color: var(--md-on-surface-faint); margin-top: 4px; }
+.stat-card.accent{
+  background: linear-gradient(135deg, var(--md-primary) 0%, var(--md-primary-dark) 100%);
+  border: none; color: #fff; grid-column: 1 / -1; padding: 20px 18px; position: relative; overflow: hidden;
+}
+.stat-card.accent::after{ content:""; position:absolute; right:-30px; top:-30px; width:120px; height:120px; border-radius:50%; background: rgba(255,255,255,.08); }
+.stat-card.accent .stat-label{ color: rgba(255,255,255,.75); }
+.stat-card.accent .stat-value{ color:#fff; font-size: 24px; }
+.stat-card.accent .stat-sub{ color: rgba(255,255,255,.8); }
+.stat-card.wide{ grid-column: 1 / -1; }
+.pedagio-rows{ display:flex; flex-direction:column; gap:8px; margin-top: 10px; }
+.pedagio-row{ display:flex; justify-content:space-between; align-items:center; font-size: 13.5px; padding: 8px 10px; background: var(--md-surface-alt); border-radius: var(--radius-sm); }
+.pedagio-row span:first-child{ color: var(--md-on-surface-soft); }
+.pedagio-row span:last-child{ font-weight: 700; }
+.timeline{ display:flex; justify-content: space-between; position: relative; padding: 6px 2px 0; }
+.timeline::before{ content:""; position:absolute; top: 9px; left: 18px; right: 18px; height: 2px; background: var(--md-outline); z-index:0; }
+.timeline .t-progress{ position:absolute; top:9px; left:18px; height:2px; background: var(--md-primary); z-index:1; transition: width .5s var(--ease); }
+.t-item{ position:relative; z-index:2; display:flex; flex-direction:column; align-items:center; flex:1; text-align:center; }
+.t-dot{ width: 18px; height: 18px; border-radius: 50%; background: var(--md-surface); border: 3px solid var(--md-outline); margin-bottom: 8px; transition: border-color .2s, background .2s; }
+.t-item.done .t-dot{ border-color: var(--md-primary); background: var(--md-primary); }
+.t-item.current .t-dot{ border-color: var(--md-primary); background: #fff; box-shadow: 0 0 0 4px var(--md-primary-container); }
+.t-label{ font-size: 11.5px; font-weight: 700; color: var(--md-on-surface-soft); margin-bottom: 2px; }
+.t-date{ font-size: 11px; color: var(--md-on-surface-faint); }
+@media (max-width: 420px){ .t-label{ font-size: 10px; } .t-date{ font-size: 9.5px; } }
+.progress-wrap{ margin-top: 4px; }
+.progress-head{ display:flex; justify-content:space-between; align-items:baseline; margin-bottom: 8px; }
+.progress-head strong{ font-size: 20px; color: var(--md-primary); }
+.progress-track{ width:100%; height: 10px; background: var(--md-outline-soft); border-radius: var(--radius-pill); overflow: hidden; }
+.progress-fill{ height:100%; background: linear-gradient(90deg, var(--md-primary), #4c7dff); border-radius: var(--radius-pill); transition: width .6s var(--ease); }
+.summary-card{ background: var(--md-surface-alt); border: 1px dashed var(--md-outline); }
+.summary-card ul{ margin: 6px 0 0; padding-left: 18px; }
+.summary-card li{ font-size: 14px; margin-bottom: 6px; color: var(--md-on-surface); }
+.summary-card .summary-title{ font-weight: 700; font-size: 13.5px; color: var(--md-on-surface-soft); margin: 12px 0 2px; text-transform: uppercase; letter-spacing: .03em; }
+.summary-card .summary-title:first-child{ margin-top: 0; }
+.accordion-item{ border-radius: var(--radius-lg); overflow: hidden; border: 1px solid var(--md-outline-soft); background: var(--md-surface); box-shadow: var(--shadow-1); margin-bottom: 14px; }
+.accordion-header{ width:100%; background:none; border:none; cursor:pointer; font-family: inherit; display:flex; align-items:center; justify-content:space-between; padding: 16px 18px; font-size: 15px; font-weight: 700; color: var(--md-on-surface); }
+.accordion-header .chev{ transition: transform .25s var(--ease); color: var(--md-primary); font-size: 18px; }
+.accordion-item.open .chev{ transform: rotate(180deg); }
+.accordion-body{ max-height: 0; overflow: hidden; transition: max-height .3s var(--ease); padding: 0 18px; }
+.accordion-item.open .accordion-body{ padding-bottom: 18px; }
+.accordion-body h3{ font-size: 13.5px; margin: 14px 0 4px; color: var(--md-primary-dark); }
+.accordion-body h3:first-child{ margin-top: 0; }
+.accordion-body p{ font-size: 13.5px; color: var(--md-on-surface-soft); margin: 0 0 4px; }
+.accordion-body table{ width:100%; border-collapse: collapse; margin: 8px 0; font-size: 12.5px; }
+.accordion-body td{ padding: 6px 4px; border-bottom: 1px solid var(--md-outline-soft); color: var(--md-on-surface-soft); vertical-align: top; }
+.accordion-body td:first-child{ font-weight: 700; color: var(--md-on-surface); white-space: nowrap; padding-right: 10px; }
+.accordion-body .disclaimer{ margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--md-outline-soft); font-size: 12px; color: var(--md-on-surface-faint); font-style: italic; }
+.actions{ display:grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 4px; }
+.actions .btn{ width:100%; }
+.actions .btn-danger{ background: #fdecea; color: #b3261e; border: 1.5px solid #f6cbc6; }
+.actions .btn-danger:hover{ background: #fbdedb; }
+.toast{
+  position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%) translateY(20px);
+  background: var(--md-on-surface); color: #fff; font-size: 13.5px; font-weight: 600;
+  padding: 12px 20px; border-radius: var(--radius-pill); box-shadow: var(--shadow-2);
+  opacity: 0; pointer-events: none; transition: opacity .25s var(--ease), transform .25s var(--ease);
+  z-index: 100; max-width: 90vw; text-align:center;
+}
+.toast.show{ opacity: 1; transform: translateX(-50%) translateY(0); }
+.footer-note{ text-align:center; font-size: 11.5px; color: var(--md-on-surface-faint); margin-top: 22px; padding: 0 12px; }
+@media (min-width: 560px){ .header h1{ font-size: 30px; } .grid-2{ grid-template-columns: 1fr 1fr 1fr; } .stat-card.accent{ grid-column: 1 / -1; } .stat-card.wide{ grid-column: 1 / -1; } }
+@media (max-width: 360px){ .grid-2{ grid-template-columns: 1fr 1fr; } }
+@media print{
+  body{ background:#fff; }
+  .input-card, .actions, .accordion-header .chev, .toast{ display:none !important; }
+  .accordion-body{ max-height: none !important; }
+  .card, .stat-card{ box-shadow:none; border:1px solid #ccc; break-inside: avoid; }
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="header">
+    <span class="badge">⚖️ Lei 13.954/2019</span>
+    <h1>Calculadora de Reserva Militar</h1>
+    <p>Para Policiais e Bombeiros Militares — simule o tempo restante para a reserva remunerada.</p>
+  </header>
+
+  <section class="card input-card">
+    <div class="field">
+      <label for="dataIngresso">📅 Data de ingresso na corporação</label>
+      <div class="date-row"><input type="date" id="dataIngresso" aria-label="Data de ingresso na corporação"></div>
+    </div>
+    <div class="field">
+      <label for="dataNascimento">🎂 Data de nascimento (opcional, para calcular idade)</label>
+      <div class="date-row"><input type="date" id="dataNascimento" aria-label="Data de nascimento"></div>
+    </div>
+    <button class="btn btn-primary" id="btnCalcular">Calcular</button>
+  </section>
+
+  <section class="results" id="results" hidden>
+    <div class="grid-2">
+      <div class="stat-card accent" id="cardReserva">
+        <div class="stat-label">Data prevista da reserva</div>
+        <div class="stat-value" id="valDataReserva">—</div>
+        <div class="stat-sub" id="subDataReserva">—</div>
+      </div>
+      <div class="stat-card wide">
+        <div class="stat-label">Regra aplicável</div>
+        <div class="stat-value" id="valRegra">—</div>
+        <div class="stat-sub" id="subRegra">—</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Tempo de serviço cumprido</div>
+        <div class="stat-value" id="valTempoServico">—</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Falta para a reserva</div>
+        <div class="stat-value" id="valRestante">—</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Tempo total de serviço</div>
+        <div class="stat-value" id="valTempoTotal">—</div>
+        <div class="stat-sub">do ingresso até a reserva</div>
+      </div>
+      <div class="stat-card" id="cardIdadeAtual" style="display:none">
+        <div class="stat-label">Idade atual</div>
+        <div class="stat-value" id="valIdadeAtual">—</div>
+      </div>
+      <div class="stat-card" id="cardIdadeReserva" style="display:none">
+        <div class="stat-label">Idade na reserva</div>
+        <div class="stat-value" id="valIdadeReserva">—</div>
+      </div>
+      <div class="stat-card" id="cardAtividadeMin" style="display:none">
+        <div class="stat-label">Atividade militar mínima</div>
+        <div class="stat-value" id="valTempoMinAtiv">—</div>
+        <div class="stat-sub">exigida dentro dos 35 anos</div>
+      </div>
+      <div class="stat-card" id="cardPedagioResumo" style="display:none">
+        <div class="stat-label">Pedágio (17%)</div>
+        <div class="stat-value" id="valPedagioTotal">—</div>
+        <div class="stat-sub" id="subPedagio">—</div>
+      </div>
+    </div>
+
+    <div class="card" id="cardPedagioDetalhe" style="display:none">
+      <h2>Detalhamento do pedágio</h2>
+      <div class="pedagio-rows">
+        <div class="pedagio-row"><span>Tempo que faltava em 17/12/2019</span><span id="pedFaltavaBase">—</span></div>
+        <div class="pedagio-row"><span>Pedágio total devido (17%)</span><span id="pedTotal">—</span></div>
+        <div class="pedagio-row"><span>Já cumprido</span><span id="pedCumprido">—</span></div>
+        <div class="pedagio-row"><span>Ainda falta</span><span id="pedFaltante">—</span></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Linha do tempo</h2>
+      <div class="timeline" id="timeline">
+        <div class="t-progress" id="timelineProgress" style="width:0%"></div>
+        <div class="t-item" id="tiIngresso"><div class="t-dot"></div><div class="t-label">Ingresso</div><div class="t-date" id="tdIngresso">—</div></div>
+        <div class="t-item" id="tiHoje"><div class="t-dot"></div><div class="t-label">Hoje</div><div class="t-date" id="tdHoje">—</div></div>
+        <div class="t-item" id="tiPedagio"><div class="t-dot"></div><div class="t-label" id="tlPedagioLabel">Fim do pedágio</div><div class="t-date" id="tdPedagio">—</div></div>
+        <div class="t-item" id="tiReserva"><div class="t-dot"></div><div class="t-label">Reserva</div><div class="t-date" id="tdReserva">—</div></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Progresso até a reserva</h2>
+      <div class="progress-wrap">
+        <div class="progress-head"><strong id="progressPercent">0%</strong><span class="stat-sub">concluído</span></div>
+        <div class="progress-track"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+      </div>
+    </div>
+
+    <div class="card summary-card">
+      <h2>Resumo</h2>
+      <div class="summary-title">Você possui</div><ul><li id="resumoServico">—</li></ul>
+      <div class="summary-title">Regra aplicável</div><ul><li id="resumoRegra">—</li></ul>
+      <div class="summary-title">Faltam</div><ul><li id="resumoRestante">—</li></ul>
+      <div class="summary-title">Pedágio</div><ul><li id="resumoPedagio">—</li></ul>
+      <div class="summary-title">Previsão da reserva</div><ul><li id="resumoData">—</li></ul>
+    </div>
+  </section>
+
+  <div class="accordion-item" id="accordionItem">
+    <button class="accordion-header" id="accordionToggle" aria-expanded="false">Como o cálculo funciona? <span class="chev">⌄</span></button>
+    <div class="accordion-body">
+      <h3>Regra antiga — direito adquirido</h3>
+      <p>Quem já havia cumprido 30 anos de serviço militar até 17/12/2019 pode passar para a reserva remunerada a qualquer momento, independentemente da idade, com direito a integralidade e paridade.</p>
+      <h3>Regra de transição</h3>
+      <p>Quem estava na ativa em 17/12/2019 e ainda não tinha completado os 30 anos precisa cumprir 30 anos de serviço mais um pedágio de 17% sobre o tempo que faltava, naquela data, para completar os 30 anos.</p>
+      <p>Exemplo: se faltavam 5 anos em 17/12/2019, o pedágio é 17% de 5 anos (0,85 ano, cerca de 10 meses), totalizando 5 anos e 10 meses adicionais de serviço. Também garante integralidade e paridade.</p>
+      <h3>Nova regra</h3>
+      <p>Quem ingressou na corporação a partir de 17/12/2019 precisa cumprir 35 anos de serviço, dos quais ao menos 30 anos devem ser de efetivo exercício de atividade de natureza militar. Não há idade mínima exigida para a reserva por tempo de serviço, e o benefício também garante integralidade e paridade.</p>
+      <table>
+        <tr><td>Direito adquirido</td><td>30 anos cumpridos até 17/12/2019 — reserva a qualquer momento</td></tr>
+        <tr><td>Regra de transição</td><td>30 anos + pedágio de 17% sobre o tempo faltante em 17/12/2019</td></tr>
+        <tr><td>Nova regra</td><td>35 anos de serviço, com mínimo de 30 anos de atividade militar</td></tr>
+      </table>
+      <p class="disclaimer">Esta ferramenta é uma simulação educativa voltada a Policiais e Bombeiros Militares, baseada em interpretação simplificada da Lei nº 13.954/2019, e não substitui a análise oficial do setor de pessoal da corporação. Regulamentos estaduais podem trazer particularidades adicionais não contempladas aqui.</p>
+    </div>
+  </div>
+
+  <section class="actions" id="actions" hidden>
+    <button class="btn btn-secondary" id="btnCompartilhar">🔗 Compartilhar</button>
+    <button class="btn btn-secondary" id="btnCopiar">📋 Copiar resumo</button>
+    <button class="btn btn-secondary" id="btnImprimir">🖨️ Imprimir PDF</button>
+    <button class="btn btn-danger" id="btnLimpar">🗑️ Limpar</button>
+  </section>
+
+  <p class="footer-note">Simulação baseada na Lei nº 13.954/2019, voltada a Policiais e Bombeiros Militares. Os prazos reais podem variar conforme a legislação estadual e regulamentos internos da corporação.</p>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ==========================================================================
+   CALCULADORA DE RESERVA MILITAR — Policiais e Bombeiros Militares
+   Regras (Lei 13.954/2019):
+   1) Direito adquirido: 30 anos de serviço cumpridos até 17/12/2019 —
+      reserva a qualquer momento, independente da idade.
+   2) Regra de transição: ativa em 17/12/2019 sem 30 anos cumpridos —
+      30 anos + pedágio de 17% sobre o tempo que faltava em 17/12/2019.
+   3) Nova regra: ingresso a partir de 17/12/2019 — 35 anos de serviço,
+      com mínimo de 30 anos de atividade de natureza militar dentro do
+      total. Sem idade mínima.
+   ========================================================================== */
+(function(){
+  "use strict";
+
+  var ANOS_REGRA_ANTIGA_TRANSICAO = 30; // base de 30 anos (direito adquirido e transição)
+  var ANOS_REGRA_NOVA             = 35; // regra nova (ingresso a partir de 17/12/2019)
+  var ATIVIDADE_MIN_REGRA_NOVA    = 30; // mínimo de atividade militar dentro dos 35 anos
+  var PEDAGIO_PERCENTUAL          = 0.17; // pedágio de 17%
+
+  var DATA_REFORMA = new Date(2019, 11, 17); // 17/12/2019
+
+  var STORAGE_KEY_DATA = "calc-reserva-militar:data-ingresso";
+  var STORAGE_KEY_NASCIMENTO = "calc-reserva-militar:data-nascimento";
+
+  var MS_POR_DIA = 1000 * 60 * 60 * 24;
+
+  /* ------------------------------------------------------------------
+     FUNÇÕES AUXILIARES DE DATA (aritmética real: bissextos, meses etc.)
+     ------------------------------------------------------------------ */
+  function zerarHora(d){ var n = new Date(d); n.setHours(0,0,0,0); return n; }
+
+  function addAnos(data, anos){
+    var d = new Date(data);
+    var dia = d.getDate();
+    var mesOriginal = d.getMonth();
+    d.setDate(1);
+    d.setFullYear(d.getFullYear() + anos);
+    var ultimoDiaMes = new Date(d.getFullYear(), mesOriginal + 1, 0).getDate();
+    d.setMonth(mesOriginal);
+    d.setDate(Math.min(dia, ultimoDiaMes));
+    return d;
+  }
+
+  function addMeses(data, meses){
+    var d = new Date(data);
+    var dia = d.getDate();
+    d.setDate(1);
+    d.setMonth(d.getMonth() + meses);
+    var ultimoDiaMes = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
+    d.setDate(Math.min(dia, ultimoDiaMes));
+    return d;
+  }
+
+  function addYMD(data, anos, meses, dias){
+    var d = addAnos(data, anos || 0);
+    d = addMeses(d, meses || 0);
+    d.setDate(d.getDate() + (dias || 0));
+    return d;
+  }
+
+  function diffYMD(inicio, fim){
+    if (fim <= inicio) return { anos:0, meses:0, dias:0 };
+    var anos  = fim.getFullYear()  - inicio.getFullYear();
+    var meses = fim.getMonth()     - inicio.getMonth();
+    var dias  = fim.getDate()      - inicio.getDate();
+    if (dias < 0){
+      meses -= 1;
+      var mesAnterior = new Date(fim.getFullYear(), fim.getMonth(), 0);
+      dias += mesAnterior.getDate();
+    }
+    if (meses < 0){ anos -= 1; meses += 12; }
+    return { anos: anos, meses: meses, dias: dias };
+  }
+
+  function formatYMD(obj, curto){
+    var partes = [];
+    if (obj.anos)  partes.push(obj.anos + (obj.anos === 1 ? " ano" : " anos"));
+    if (obj.meses) partes.push(obj.meses + (obj.meses === 1 ? " mês" : " meses"));
+    if (!curto && obj.dias) partes.push(obj.dias + (obj.dias === 1 ? " dia" : " dias"));
+    if (partes.length === 0) return "0 dias";
+    if (partes.length === 1) return partes[0];
+    var ultima = partes.pop();
+    return partes.join(", ") + " e " + ultima;
+  }
+
+  function formatBR(d){
+    var dd = String(d.getDate()).padStart(2, "0");
+    var mm = String(d.getMonth() + 1).padStart(2, "0");
+    var yy = d.getFullYear();
+    return dd + "/" + mm + "/" + yy;
+  }
+
+  /* ------------------------------------------------------------------
+     REGRA DE NEGÓCIO: PEDÁGIO DE 17%
+     ------------------------------------------------------------------ */
+  function calcularPedagioDias(dataInicioPedagio, dataReforma){
+    var diasFaltantes = Math.round((dataInicioPedagio - dataReforma) / MS_POR_DIA);
+    var diasPedagio = Math.round(diasFaltantes * PEDAGIO_PERCENTUAL);
+    return { diasFaltantes: diasFaltantes, diasPedagio: diasPedagio };
+  }
+
+  /* ------------------------------------------------------------------
+     CÁLCULO PRINCIPAL
+     ------------------------------------------------------------------ */
+  function calcular(dataIngresso, dataNascimento){
+    var hoje = zerarHora(new Date());
+    var tempoServico = diffYMD(dataIngresso, hoje > dataIngresso ? hoje : dataIngresso);
+    var data30 = addYMD(dataIngresso, ANOS_REGRA_ANTIGA_TRANSICAO, 0, 0);
+
+    var regime, dataReserva;
+    var dataInicioPedagio = null, dataFimPedagio = null;
+    var pedagioAplicavel = false;
+    var pedagioFaltavaBaseYMD = { anos:0, meses:0, dias:0 };
+    var pedagioTotalYMD = { anos:0, meses:0, dias:0 };
+    var tempoMinAtividade = null; // só se aplica à regra nova
+
+    if (dataIngresso > DATA_REFORMA){
+      // Nova regra: 35 anos, com mínimo de 30 anos de atividade militar.
+      regime = "nova";
+      dataReserva = addYMD(dataIngresso, ANOS_REGRA_NOVA, 0, 0);
+      tempoMinAtividade = ATIVIDADE_MIN_REGRA_NOVA;
+    } else if (data30 <= DATA_REFORMA){
+      // Direito adquirido: já tinha 30 anos em 17/12/2019.
+      regime = "adquirido";
+      dataReserva = data30;
+    } else {
+      // Regra de transição: 30 anos + pedágio de 17%.
+      regime = "transicao";
+      pedagioAplicavel = true;
+      dataInicioPedagio = data30;
+
+      var calc = calcularPedagioDias(data30, DATA_REFORMA);
+      dataFimPedagio = new Date(data30);
+      dataFimPedagio.setDate(dataFimPedagio.getDate() + calc.diasPedagio);
+      dataReserva = dataFimPedagio;
+
+      var dataAlvoBase = new Date(DATA_REFORMA);
+      dataAlvoBase.setDate(dataAlvoBase.getDate() + calc.diasFaltantes);
+      pedagioFaltavaBaseYMD = diffYMD(DATA_REFORMA, dataAlvoBase);
+      pedagioTotalYMD = diffYMD(dataInicioPedagio, dataFimPedagio);
+    }
+
+    var restante = diffYMD(hoje < dataReserva ? hoje : dataReserva, dataReserva);
+    var tempoTotalServico = diffYMD(dataIngresso, dataReserva);
+
+    // Pedágio: progresso (cumprido / faltante)
+    var pedagioCumpridoYMD = { anos:0, meses:0, dias:0 };
+    var pedagioFaltanteYMD = { anos:0, meses:0, dias:0 };
+    if (pedagioAplicavel){
+      if (hoje <= dataInicioPedagio){
+        pedagioFaltanteYMD = diffYMD(dataInicioPedagio, dataFimPedagio);
+      } else if (hoje >= dataFimPedagio){
+        pedagioCumpridoYMD = diffYMD(dataInicioPedagio, dataFimPedagio);
+      } else {
+        pedagioCumpridoYMD = diffYMD(dataInicioPedagio, hoje);
+        pedagioFaltanteYMD = diffYMD(hoje, dataFimPedagio);
+      }
+    }
+
+    // Idades (opcional, se data de nascimento informada)
+    var idadeAtual = null, idadeReserva = null;
+    if (dataNascimento){
+      idadeAtual = diffYMD(dataNascimento, hoje > dataNascimento ? hoje : dataNascimento).anos;
+      idadeReserva = diffYMD(dataNascimento, dataReserva > dataNascimento ? dataReserva : dataNascimento).anos;
+    }
+
+    var totalMs = dataReserva - dataIngresso;
+    var passadoMs = hoje - dataIngresso;
+    var percentual = totalMs > 0 ? Math.max(0, Math.min(100, (passadoMs / totalMs) * 100)) : 100;
+
+    return {
+      hoje: hoje, dataIngresso: dataIngresso, tempoServico: tempoServico, regime: regime,
+      dataReserva: dataReserva, restante: restante, tempoTotalServico: tempoTotalServico,
+      tempoMinAtividade: tempoMinAtividade,
+      pedagioAplicavel: pedagioAplicavel, dataInicioPedagio: dataInicioPedagio,
+      dataFimPedagio: dataFimPedagio || dataReserva, pedagioFaltavaBaseYMD: pedagioFaltavaBaseYMD,
+      pedagioTotalYMD: pedagioTotalYMD, pedagioCumpridoYMD: pedagioCumpridoYMD,
+      pedagioFaltanteYMD: pedagioFaltanteYMD, percentual: percentual,
+      idadeAtual: idadeAtual, idadeReserva: idadeReserva
+    };
+  }
+
+  /* ------------------------------------------------------------------
+     RENDERIZAÇÃO
+     ------------------------------------------------------------------ */
+  var $ = function(id){ return document.getElementById(id); };
+  var ROTULO_REGIME = {
+    nova:       "Nova regra (35 anos)",
+    transicao:  "Regra de transição (30 anos + pedágio)",
+    adquirido:  "Direito adquirido (30 anos)"
+  };
+
+  function renderizar(r){
+    $("results").hidden = false;
+    $("actions").hidden = false;
+
+    $("valDataReserva").textContent = formatBR(r.dataReserva);
+    $("subDataReserva").textContent = r.hoje >= r.dataReserva
+      ? (r.regime === "adquirido" ? "Direito adquirido — disponível" : "Requisitos já atingidos")
+      : "Faltam " + formatYMD(r.restante, true);
+
+    $("valRegra").textContent = ROTULO_REGIME[r.regime];
+    $("subRegra").textContent = r.regime === "nova" ? "ingresso a partir de 17/12/2019"
+      : r.regime === "adquirido" ? "já tinha 30 anos em 17/12/2019"
+      : "ativa em 17/12/2019, sem 30 anos completos";
+
+    $("valTempoServico").textContent = formatYMD(r.tempoServico);
+    $("valRestante").textContent = (r.hoje >= r.dataReserva) ? "Concluído" : formatYMD(r.restante, true);
+    $("valTempoTotal").textContent = formatYMD(r.tempoTotalServico);
+
+    // Idades (só exibe se data de nascimento foi informada)
+    if (r.idadeAtual !== null){
+      $("cardIdadeAtual").style.display = "";
+      $("cardIdadeReserva").style.display = "";
+      $("valIdadeAtual").textContent = r.idadeAtual + " anos";
+      $("valIdadeReserva").textContent = r.idadeReserva + " anos";
+    } else {
+      $("cardIdadeAtual").style.display = "none";
+      $("cardIdadeReserva").style.display = "none";
+    }
+
+    // Atividade militar mínima (só na regra nova)
+    if (r.tempoMinAtividade !== null){
+      $("cardAtividadeMin").style.display = "";
+      $("valTempoMinAtiv").textContent = r.tempoMinAtividade + " anos";
+    } else {
+      $("cardAtividadeMin").style.display = "none";
+    }
+
+    // Pedágio (resumo + detalhado)
+    if (r.pedagioAplicavel){
+      $("cardPedagioResumo").style.display = "";
+      $("cardPedagioDetalhe").style.display = "";
+      $("valPedagioTotal").textContent = formatYMD(r.pedagioTotalYMD, true);
+      $("subPedagio").textContent = "sobre " + formatYMD(r.pedagioFaltavaBaseYMD, true) + " faltantes em 17/12/2019";
+      $("pedFaltavaBase").textContent = formatYMD(r.pedagioFaltavaBaseYMD, true);
+      $("pedTotal").textContent = formatYMD(r.pedagioTotalYMD, true);
+      $("pedCumprido").textContent = formatYMD(r.pedagioCumpridoYMD);
+      $("pedFaltante").textContent = formatYMD(r.pedagioFaltanteYMD);
+    } else {
+      $("cardPedagioResumo").style.display = "none";
+      $("cardPedagioDetalhe").style.display = "none";
+    }
+
+    // Timeline
+    $("tdIngresso").textContent = formatBR(r.dataIngresso);
+    $("tdHoje").textContent = formatBR(r.hoje);
+    $("tdPedagio").textContent = formatBR(r.dataFimPedagio);
+    $("tdReserva").textContent = formatBR(r.dataReserva);
+    $("tlPedagioLabel").textContent = r.pedagioAplicavel ? "Fim do pedágio" : "Marco de 30 anos";
+
+    ["tiIngresso","tiHoje","tiPedagio","tiReserva"].forEach(function(id){ $(id).classList.remove("done", "current"); });
+    $("tiIngresso").classList.add("done");
+    if (r.hoje >= r.dataFimPedagio) $("tiPedagio").classList.add("done");
+    if (r.hoje >= r.dataReserva) $("tiReserva").classList.add("done");
+    $("tiHoje").classList.add("current");
+
+    var total = r.dataReserva - r.dataIngresso;
+    var passado = r.hoje - r.dataIngresso;
+    var timelineWidth = total <= 0 ? 100 : Math.max(0, Math.min(100, (passado/total)*100));
+    $("timelineProgress").style.width = timelineWidth + "%";
+
+    var pct = Math.round(r.percentual);
+    $("progressPercent").textContent = pct + "%";
+    $("progressFill").style.width = pct + "%";
+
+    $("resumoServico").textContent = formatYMD(r.tempoServico) + " de serviço.";
+    $("resumoRegra").textContent = ROTULO_REGIME[r.regime] + ".";
+    $("resumoRestante").textContent = (r.hoje >= r.dataReserva) ? "Requisitos já atingidos." : formatYMD(r.restante, true) + " para a reserva.";
+    $("resumoPedagio").textContent = (!r.pedagioAplicavel) ? "Não se aplica." : formatYMD(r.pedagioTotalYMD, true) + ".";
+    $("resumoData").textContent = formatBR(r.dataReserva) + ".";
+  }
+
+  function gerarTextoResumo(r){
+    var linhas = [];
+    linhas.push("Calculadora de Reserva Militar");
+    linhas.push("");
+    linhas.push("Você possui:");
+    linhas.push("• " + formatYMD(r.tempoServico) + " de serviço.");
+    linhas.push("");
+    linhas.push("Regra aplicável:");
+    linhas.push("• " + ROTULO_REGIME[r.regime] + ".");
+    linhas.push("");
+    linhas.push("Faltam:");
+    linhas.push("• " + (r.hoje >= r.dataReserva ? "Requisitos já atingidos." : formatYMD(r.restante, true) + " para a reserva."));
+    linhas.push("");
+    linhas.push("Pedágio:");
+    linhas.push("• " + (!r.pedagioAplicavel ? "Não se aplica." : formatYMD(r.pedagioTotalYMD, true) + "."));
+    linhas.push("");
+    if (r.idadeAtual !== null){
+      linhas.push("Idade na reserva:");
+      linhas.push("• " + r.idadeReserva + " anos.");
+      linhas.push("");
+    }
+    linhas.push("Previsão da reserva:");
+    linhas.push("• " + formatBR(r.dataReserva));
+    return linhas.join("\n");
+  }
+
+  var toastTimer = null;
+  function mostrarToast(msg){
+    var el = $("toast");
+    el.textContent = msg;
+    el.classList.add("show");
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function(){ el.classList.remove("show"); }, 2400);
+  }
+
+  var inputData = $("dataIngresso");
+  var inputNascimento = $("dataNascimento");
+  var ultimoResultado = null;
+
+  function executarCalculo(salvar){
+    var valor = inputData.value;
+    if (!valor) return;
+    var dataIngresso = zerarHora(new Date(valor + "T00:00:00"));
+    if (isNaN(dataIngresso.getTime())) return;
+
+    var valorNascimento = inputNascimento.value;
+    var dataNascimento = null;
+    if (valorNascimento){
+      dataNascimento = zerarHora(new Date(valorNascimento + "T00:00:00"));
+      if (isNaN(dataNascimento.getTime())) dataNascimento = null;
+    }
+
+    ultimoResultado = calcular(dataIngresso, dataNascimento);
+    renderizar(ultimoResultado);
+
+    if (salvar !== false){
+      try {
+        localStorage.setItem(STORAGE_KEY_DATA, valor);
+        if (valorNascimento) localStorage.setItem(STORAGE_KEY_NASCIMENTO, valorNascimento);
+        else localStorage.removeItem(STORAGE_KEY_NASCIMENTO);
+      } catch(e){}
+    }
+  }
+
+  $("btnCalcular").addEventListener("click", function(){ executarCalculo(true); });
+  inputData.addEventListener("change", function(){ executarCalculo(true); });
+  inputNascimento.addEventListener("change", function(){ executarCalculo(true); });
+
+  $("accordionToggle").addEventListener("click", function(){
+    var item = $("accordionItem");
+    var body = item.querySelector(".accordion-body");
+    var abrindo = !item.classList.contains("open");
+    item.classList.toggle("open");
+    $("accordionToggle").setAttribute("aria-expanded", abrindo ? "true" : "false");
+    body.style.maxHeight = abrindo ? body.scrollHeight + "px" : "0px";
+  });
+
+  $("btnCompartilhar").addEventListener("click", function(){
+    if (!ultimoResultado) return;
+    var texto = gerarTextoResumo(ultimoResultado);
+    if (navigator.share){
+      navigator.share({ title: "Calculadora de Reserva Militar", text: texto }).catch(function(){});
+    } else {
+      copiarParaClipboard(texto);
+      mostrarToast("Compartilhamento indisponível — resumo copiado!");
+    }
+  });
+
+  $("btnCopiar").addEventListener("click", function(){
+    if (!ultimoResultado) return;
+    copiarParaClipboard(gerarTextoResumo(ultimoResultado));
+    mostrarToast("Resumo copiado para a área de transferência!");
+  });
+
+  function copiarParaClipboard(texto){
+    if (navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(texto).catch(function(){ copiarFallback(texto); });
+    } else { copiarFallback(texto); }
+  }
+  function copiarFallback(texto){
+    var ta = document.createElement("textarea");
+    ta.value = texto;
+    ta.style.position = "fixed";
+    ta.style.opacity = "0";
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand("copy"); } catch(e){}
+    document.body.removeChild(ta);
+  }
+
+  $("btnImprimir").addEventListener("click", function(){ window.print(); });
+
+  $("btnLimpar").addEventListener("click", function(){
+    inputData.value = "";
+    inputNascimento.value = "";
+    ultimoResultado = null;
+    $("results").hidden = true;
+    $("actions").hidden = true;
+    try {
+      localStorage.removeItem(STORAGE_KEY_DATA);
+      localStorage.removeItem(STORAGE_KEY_NASCIMENTO);
+    } catch(e){}
+    mostrarToast("Dados limpos.");
+  });
+
+  (function iniciar(){
+    var salvo = null, nascimentoSalvo = null;
+    try {
+      salvo = localStorage.getItem(STORAGE_KEY_DATA);
+      nascimentoSalvo = localStorage.getItem(STORAGE_KEY_NASCIMENTO);
+    } catch(e){}
+    if (nascimentoSalvo){ inputNascimento.value = nascimentoSalvo; }
+    if (salvo){ inputData.value = salvo; executarCalculo(false); }
+  })();
+
+})();
+</script>
+</body>
+</html>
